@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conteo de Tarimas · Desconsolidadores</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="top">
+    <h1>Conteo de Tarimas <span>· Desconsolidadores</span></h1>
+    <p>Sube el ruteo, elige el desconsolidador, captura tarimas y copia la tabla al correo.</p>
+  </header>
+
+  <main>
+    <section class="card" aria-labelledby="h-files">
+      <h2 id="h-files"><span class="step">1</span> Archivos del día</h2>
+      <div class="files">
+        <label class="drop" id="drop-ruteo">
+          <strong>RUTEO</strong>
+          <span class="hint">RUTEO dd-mm-aaaa.xlsx — arrastra aquí o haz clic</span>
+          <input type="file" id="file-ruteo" accept=".xlsx,.xlsm,.xls">
+          <span class="fname" id="ruteo-name">Sin archivo — haz clic para elegir</span>
+        </label>
+        <label class="drop" id="drop-gls">
+          <strong>FACTURAS GLS</strong>
+          <span class="hint">glsShipmentStatus_*.xls — opcional, para llenar FACTURA</span>
+          <input type="file" id="file-gls" accept=".xls,.xlsx">
+          <span class="fname" id="gls-name">Sin archivo — haz clic para elegir</span>
+        </label>
+        <div class="field">
+          <label for="fecha"><strong>FECHA</strong></label>
+          <input type="date" id="fecha">
+          <span class="hint">Se toma del nombre del ruteo.</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" id="step-descos" aria-labelledby="h-descos" hidden>
+      <h2 id="h-descos"><span class="step">2</span> Desconsolidador</h2>
+      <div class="picker">
+        <fieldset>
+          <legend class="sr-only">Desconsolidadores a mostrar</legend>
+          <div id="descos" class="chips"></div>
+        </fieldset>
+        <button type="button" class="btn ghost" id="select-all">Todos / ninguno</button>
+      </div>
+      <div id="rutas-box" class="rutas-box" hidden>
+        <h3><span class="step">3</span> Rutas a mostrar y copiar</h3>
+        <div id="rutas"></div>
+      </div>
+      <div class="options">
+        <label><input type="checkbox" id="opt-factura"> Ocultar FACTURA en tiendas sin TARIMAS capturadas</label>
+      </div>
+    </section>
+
+    <div class="actions" role="toolbar" aria-label="Acciones">
+      <button type="button" class="btn primary" id="copy-selected" disabled>Copiar seleccionados para correo</button>
+      <button type="button" class="btn ghost" id="clear-day">Borrar capturas del día</button>
+      <p id="status" role="status" aria-live="polite"></p>
+      <p id="now" class="now" hidden></p>
+    </div>
+
+    <p class="tips"><kbd>Enter</kbd> / <kbd>↓</kbd> baja a la siguiente tienda · <kbd>↑</kbd> sube · lo capturado se guarda solo en este navegador.</p>
+
+    <div id="output"></div>
+  </main>
+
+  <script src="vendor/xlsx.full.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/util.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ruteo.js"></script>
+  <script src="js/gls.js"></script>
+  <script src="js/table.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
