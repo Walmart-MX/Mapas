@@ -4,7 +4,8 @@
  * CORTINA (A) o CONGE/REFRI (D) llenos. Dentro del bloque:
  *   - 2a fila de RUTA          -> TRACTOR
  *   - 1a fila de REMOLQUE      -> UNIDAD
- *   - "DESCO XXX" o "FRIALSA" en RUTA -> desconsolidador
+ *   - "DESCO XXX" o "FRIALSA" en RUTA, o "... DESCO XXX" en un comentario -> desconsolidador
+ *     (sin acentos: "MÉRIDA" y "MERIDA" son el mismo)
  *   - texto en DETTE sin tienda -> comentario ("ENTREGA EN TIENDA", "FRIALSA"...)
  *   - color de DETTE..CAJAS    -> grupo (desconsolidador vs entrega a tienda);
  *                                 el comentario del mismo color es el de ese grupo
@@ -20,7 +21,13 @@ Conteo.ruteo = (() => {
   const { clean, intText, readSheet } = Conteo.util;
   const cfg = Conteo.config;
   const COL = cfg.RUTEO_COLUMNS;
-  const DESCO_TEXT = /^DESCO\s+(.+)$/i;
+  const DESCO_TEXT = /\bDESCO\s+(.+)$/; // en cualquier parte: "1036 ENTREGA EN DESCO MERIDA"
+  const ACCENTS = /[\u0300-\u036f]/g;
+
+  /** "Mérida " -> "MERIDA": sin acentos y en mayusculas, para que no se dupliquen descos. */
+  function plain(text) {
+    return text.normalize("NFD").replace(ACCENTS, "").toUpperCase().trim();
+  }
 
   function isRouteStart(row) {
     return Boolean(intText(row[COL.RUTA])) && Boolean(clean(row[COL.CORTINA]) || clean(row[COL.CONGE_REFRI]));
@@ -36,11 +43,14 @@ Conteo.ruteo = (() => {
     });
   }
 
-  /** Nombre de desco en un texto: "DESCO TUXTLA" -> TUXTLA, "FRIALSA" -> FRIALSA. */
+  /**
+   * Nombre de desco en un texto (normalizado, sin acentos):
+   * "DESCO TUXTLA" -> TUXTLA, "1036 ENTREGA EN DESCO MÉRIDA" -> MERIDA, "FRIALSA" -> FRIALSA.
+   */
   function descoIn(text) {
-    const match = DESCO_TEXT.exec(text);
-    if (match) return match[1].toUpperCase();
-    const upper = text.toUpperCase();
+    const upper = plain(text);
+    const match = DESCO_TEXT.exec(upper);
+    if (match) return match[1].trim();
     return cfg.KNOWN_DESCOS.includes(upper) ? upper : null;
   }
 
