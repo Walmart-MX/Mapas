@@ -4,7 +4,8 @@
  * CORTINA (A) o CONGE/REFRI (D) llenos. Dentro del bloque:
  *   - 2a fila de RUTA          -> TRACTOR
  *   - 1a fila de REMOLQUE      -> UNIDAD
- *   - "DESCO XXX" o "FRIALSA" en RUTA, o "... DESCO XXX" en un comentario -> desconsolidador
+ *   - "DESCO XXX" o un desco conocido ("FRIALSA") en RUTA, o en un comentario
+ *     ("... DESCO XXX", "ENTREGA EN FRIALSA") -> desconsolidador
  *     (sin acentos: "MÉRIDA" y "MERIDA" son el mismo)
  *   - texto en DETTE sin tienda -> comentario ("ENTREGA EN TIENDA", "FRIALSA"...)
  *   - color de DETTE..CAJAS    -> grupo (desconsolidador vs entrega a tienda);
@@ -22,6 +23,8 @@ Conteo.ruteo = (() => {
   const cfg = Conteo.config;
   const COL = cfg.RUTEO_COLUMNS;
   const DESCO_TEXT = /\bDESCO\s+(.+)$/; // en cualquier parte: "1036 ENTREGA EN DESCO MERIDA"
+  // Desco conocido como palabra completa: "ENTREGA EN FRIALSA" -> FRIALSA
+  const KNOWN_DESCO = new RegExp(`\\b(${cfg.KNOWN_DESCOS.join("|")})\\b`);
   const ACCENTS = /[\u0300-\u036f]/g;
 
   /** "Mérida " -> "MERIDA": sin acentos y en mayusculas, para que no se dupliquen descos. */
@@ -45,13 +48,13 @@ Conteo.ruteo = (() => {
 
   /**
    * Nombre de desco en un texto (normalizado, sin acentos):
-   * "DESCO TUXTLA" -> TUXTLA, "1036 ENTREGA EN DESCO MÉRIDA" -> MERIDA, "FRIALSA" -> FRIALSA.
+   * "DESCO TUXTLA" -> TUXTLA, "1036 ENTREGA EN DESCO MÉRIDA" -> MERIDA,
+   * "FRIALSA" / "ENTREGA EN FRIALSA" -> FRIALSA.
    */
   function descoIn(text) {
     const upper = plain(text);
-    const match = DESCO_TEXT.exec(upper);
-    if (match) return match[1].trim();
-    return cfg.KNOWN_DESCOS.includes(upper) ? upper : null;
+    const match = DESCO_TEXT.exec(upper) || KNOWN_DESCO.exec(upper);
+    return match ? match[1].trim() : null;
   }
 
   /**
