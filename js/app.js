@@ -57,6 +57,7 @@
       state.hiddenRoutes.clear();
       renderPicker();
       refresh();
+      Conteo.mapasUi.routesChanged();
       announceLoaded(`Ruteo cargado: ${state.routes.length} rutas, ${found.length} desconsolidadores (${found.join(", ")}).`);
     } catch (error) {
       announce(`No pude leer el ruteo: ${error.message}`, true);
@@ -172,6 +173,16 @@
     document.querySelectorAll("[data-desco-total]").forEach((el) => { el.textContent = descoTotalText(el.dataset.descoTotal); });
   }
 
+  /** Marca en vivo si lo tecleado en TARIMAS coincide con lo que conto el mapa. */
+  function markMapa(input) {
+    const mapa = input.dataset.mapaValue;
+    if (!mapa) return;
+    const state = Conteo.table.mapaState(input.value, mapa);
+    if (state) input.dataset.mapa = state;
+    else delete input.dataset.mapa;
+    input.title = state === "match" ? "Contado del mapa escaneado" : `El mapa dice ${mapa}`;
+  }
+
   /** Si la ruta sale en dos descos, mantiene iguales sus capturas en ambas tablas. */
   function syncTwins(input) {
     const { field, ruta, dette } = input.dataset;
@@ -249,19 +260,29 @@
   function wireFileInput(inputId, dropId, handler) {
     const input = $(inputId);
     const drop = $(dropId);
-    input.addEventListener("change", () => input.files[0] && handler(input.files[0]));
+    input.addEventListener("change", () => {
+      if (input.files.length) handler([...input.files]);
+      input.value = ""; // permite volver a elegir el mismo archivo
+    });
     drop.addEventListener("dragover", (event) => { event.preventDefault(); drop.classList.add("over"); });
     drop.addEventListener("dragleave", () => drop.classList.remove("over"));
     drop.addEventListener("drop", (event) => {
       event.preventDefault();
       drop.classList.remove("over");
-      const file = event.dataTransfer.files[0];
-      if (file) handler(file);
+      const files = [...event.dataTransfer.files];
+      if (files.length) handler(files);
     });
   }
 
-  wireFileInput("#file-ruteo", "#drop-ruteo", onRuteo);
-  wireFileInput("#file-gls", "#drop-gls", onGls);
+  wireFileInput("#file-ruteo", "#drop-ruteo", ([file]) => onRuteo(file));
+  wireFileInput("#file-gls", "#drop-gls", ([file]) => onGls(file));
+  wireFileInput("#file-mapas", "#drop-mapas", (files) => Conteo.mapasUi.upload(files));
+
+  Conteo.mapasUi.init({
+    getRoutes: () => state.routes,
+    onApplied: render,
+    announce,
+  });
 
   $("#fecha").addEventListener("change", (event) => {
     setFecha(event.target.value);
@@ -304,6 +325,7 @@
     if (!confirm("¿Borrar TARIMAS, GLS y WTMS capturados para esta fecha?")) return;
     Conteo.store.clearDay();
     render();
+    Conteo.mapasUi.refresh();
     announce("Capturas del dia borradas.");
   });
 
@@ -325,8 +347,10 @@
     }
     if (field !== "WTMS") refreshFacturas(ruta);
     if (field === "TARIMAS") {
+      markMapa(input);
       refreshTotals(ruta);
       setActive(input); // actualiza el total en la barra fija
+      Conteo.mapasUi.refresh(); // diferencias con el mapa
     }
   });
 

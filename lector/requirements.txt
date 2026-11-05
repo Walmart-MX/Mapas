@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+python-multipart
+pymupdf
+numpy
+opencv-python-headless
+rapidocr_onnxruntime

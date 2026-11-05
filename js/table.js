@@ -48,6 +48,20 @@ Conteo.table = (() => {
 
   const isMerged = (column) => cfg.MERGED_COLUMNS.includes(column);
 
+  /** TARIMAS vs lo que conto el mapa: "" (sin mapa o sin captura), "match" (vino del mapa) o "mismatch". */
+  function mapaState(value, mapa) {
+    const typed = String(value ?? "").trim();
+    if (!mapa || !typed) return "";
+    return typed === mapa ? "match" : "mismatch";
+  }
+
+  function mapaAttrs(value, mapa) {
+    const state = mapaState(value, mapa);
+    if (state === "match") return ' data-mapa="match" title="Contado del mapa escaneado"';
+    if (state === "mismatch") return ` data-mapa="mismatch" title="El mapa dice ${escapeHtml(mapa)}"`;
+    return "";
+  }
+
   /* ---------------------------- totales ---------------------------- */
 
   /** Suma de TARIMAS capturadas de una ruta (solo valores numericos; coma o punto decimal). */
@@ -111,6 +125,7 @@ Conteo.table = (() => {
             color: colorFor(column, store),
             suggested: column === "GLS" && glsIsSuggested,
             unknown: column === "GLS" && Boolean(gls && ctx.glsIndex && !ctx.glsIndex.has(gls)),
+            mapa: column === "TARIMAS" ? Conteo.store.get(route.ruta, "MAPA", store.key) : "",
           };
         }),
       };
@@ -155,9 +170,11 @@ Conteo.table = (() => {
     const dette = isStore ? cell.dette : "";
     const label = isStore ? `${cell.column} tienda ${dette} ruta ${ruta}` : `${cell.column} ruta ${ruta}`;
     const extra = (cell.suggested ? ' data-suggested="1" title="Sugerido del archivo GLS (puedes cambiarlo)"' : "") +
-      (cell.unknown ? ' data-unknown="1" title="Este GLS no existe en el archivo de facturas cargado"' : "");
+      (cell.unknown ? ' data-unknown="1" title="Este GLS no existe en el archivo de facturas cargado"' : "") +
+      mapaAttrs(cell.value, cell.mapa);
+    const mapa = cell.mapa ? ` data-mapa-value="${escapeHtml(cell.mapa)}"` : "";
     return `<input type="text" inputmode="numeric" autocomplete="off" class="cap cap-${cell.column.toLowerCase()}"` +
-      ` data-field="${cell.column}" data-ruta="${ruta}" data-dette="${dette}"` +
+      ` data-field="${cell.column}" data-ruta="${ruta}" data-dette="${dette}"${mapa}` +
       ` aria-label="${escapeHtml(label)}" value="${escapeHtml(cell.value)}"${extra}>`;
   }
 
@@ -233,5 +250,5 @@ Conteo.table = (() => {
     return lines.join("\n");
   }
 
-  return Object.freeze({ buildModel, toHtml, toText, tarimasTotal, formatTotal, describeTotals });
+  return Object.freeze({ buildModel, toHtml, toText, tarimasTotal, formatTotal, describeTotals, mapaState });
 })();

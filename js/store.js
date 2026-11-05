@@ -1,9 +1,11 @@
 /* Capturas manuales (TARIMAS, GLS, WTMS) guardadas en el navegador
- * por fecha de ruteo, para no perder el conteo si se cierra la pestana. */
+ * por fecha de ruteo, para no perder el conteo si se cierra la pestana.
+ * MAPA = tarimas que conto el lector de mapas (para marcar diferencias con TARIMAS). */
 window.Conteo = window.Conteo || {};
 
 Conteo.store = (() => {
   const PREFIX = "conteo-tarimas:";
+  const STORE_FIELDS = { TARIMAS: "tarimas", MAPA: "mapa" }; // por tienda (requieren dette)
   let fecha = "";
   let data = {};
 
@@ -29,20 +31,22 @@ Conteo.store = (() => {
   }
 
   function routeData(ruta) {
-    data[ruta] = data[ruta] || { tarimas: {} };
+    data[ruta] = data[ruta] || {};
     return data[ruta];
   }
 
-  /** field: "GLS" | "WTMS" (ruta) o "TARIMAS" (tienda, requiere dette). */
+  /** field: "GLS" | "WTMS" (ruta) o "TARIMAS" | "MAPA" (tienda, requiere dette). */
   function get(ruta, field, dette) {
     const route = data[ruta];
     if (!route) return "";
-    return (field === "TARIMAS" ? route.tarimas?.[dette] : route[field]) ?? "";
+    const storeField = STORE_FIELDS[field];
+    return (storeField ? route[storeField]?.[dette] : route[field]) ?? "";
   }
 
   function set(ruta, field, value, dette) {
     const route = routeData(ruta);
-    if (field === "TARIMAS") route.tarimas[dette] = value;
+    const storeField = STORE_FIELDS[field];
+    if (storeField) (route[storeField] = route[storeField] || {})[dette] = value;
     else route[field] = value;
     persist();
   }

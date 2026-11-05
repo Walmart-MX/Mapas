@@ -59,6 +59,14 @@ Conteo.config = (() => {
     }),
     /** Encabezados con color propio (VENTANAS VERDES va en verde). */
     HEADER_COLORS: Object.freeze({ "VENTANAS VERDES": "#00B050" }),
+    /** Lector de mapas (lector/server.py). Abierta desde INICIAR.bat es el mismo origen;
+     *  abierta como archivo (file://) se busca en el puerto local. */
+    LECTOR_URL: location.protocol.startsWith("http") ? "" : "http://localhost:8765",
+    MAPAS: Object.freeze({
+      ACCEPT: /\.(pdf|jpe?g|png|tiff?|bmp)$/i,
+      MIN_ROUTE_CELLS: 3, // celdas con tiendas/numero de la ruta para darla por identificada
+      LEAD: 1.5,          // la ruta ganadora debe superar asi a la segunda (si no, se pregunta)
+    }),
     columnsFor(desco) {
       return COLUMNS_BY_DESCO[desco] || BASE_COLUMNS;
     },
